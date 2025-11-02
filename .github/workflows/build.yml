@@ -142,7 +142,11 @@ jobs:
           php-version: 8.2
           extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, mysql, mysqli, pdo_mysql, bcmath, soap, intl, gd, exif, iconv, imagick
 
+    - name: Download Robo via Composer
+      run: composer require consolidation/robo:^5
+
     - name: Download Robo
+      if: ${{ false }}
       run: |
         wget -q https://robo.li/robo.phar
         chmod +x robo.phar
@@ -150,7 +154,7 @@ jobs:
     # BUILD FOR DISTRIBUTION
     - name: Build distribution
       run: |
-        ./robo.phar setup:image ${{ needs.vars.outputs.fop_work_dir }}
+        vendor/bin/robo setup:image ${{ needs.vars.outputs.fop_work_dir }}
         jpackage --app-version ${{ needs.build-test-plugin.outputs.release_version }} --input ${{ needs.vars.outputs.fop_work_dir }} --dest ./target/dist "@jpackage/jpackage.cfg"
         
     - name: Zip App Image
@@ -264,33 +268,18 @@ jobs:
           java-version: ${{ needs.vars.outputs.java_version }}
           distribution: ${{ needs.vars.outputs.java_distribution }}
 
+      - name: Download Robo via Composer
+        run: composer require consolidation/robo:^5
+
       - name: Download Robo
+        if: ${{ false }}
         run: |
           wget -q https://robo.li/robo.phar
           chmod +x robo.phar
 
       - name: Create Folders
         run: |
-          ./robo.phar prepare		
-#          PHING_PHAR="bin/phing*.phar"
-#          php $PHING_PHAR prepare
-
-#      - name: Grab Theme Asset
-#        env:
-#          TOKEN: ${{ secrets.MY_GITHUB_PAT }}
-#        run: |
-#          # Grab the asset information
-#          curl -q -u ":$TOKEN" \
-#          -H "Accept: application/vnd.github.v3.raw" \
-#          -s $GITHUB_API_URL/repos/${{ github.repository_owner }}/iConsent-theme/releases/latest > asset.json
-#          # Save the asset information
-#          AssetId="$(jq ".assets[0].id" <asset.json)"
-#          AssetName="$(jq ".assets[0].name" <asset.json | tr -d \")"
-#          # Download the asset
-#          curl -q -u ":$TOKEN" \
-#          -L \
-#          -H "Accept: application/octet-stream" \
-#          $GITHUB_API_URL/repos/${{ github.repository_owner }}/iConsent-theme/releases/assets/$AssetId --output build/$AssetName
+          vendor/bin/robo prepare		
 
       - name: Setup Authorization for Composer
         run: |
@@ -312,19 +301,7 @@ jobs:
 
       - name: Create Package
         run: |
-          ./robo.phar package ${{ steps.build-vars.outputs.version }}
-#          PHING_PHAR="bin/phing*.phar"
-#          php $PHING_PHAR package -Dbuild.version=${{ steps.build-vars.outputs.version }}
-
-#      - name: Create Release
-#        id: create-release
-#        uses: actions/create-release@v1
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#        with:
-#          tag_name: ${{ steps.build-vars.outputs.version }}
-#          release_name: Release ${{ steps.build-vars.outputs.version }}
-#          commitish: ${{ env.version-commit-ref }}
+          vendor/bin/robo package ${{ steps.build-vars.outputs.version }}
 
       # CREATE GITHUB RELEASE AND ADD ASSETS
       - name: Create GitHub release
