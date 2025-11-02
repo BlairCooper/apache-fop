@@ -19,7 +19,7 @@ jobs:
       project_name: ${{ steps.setup-vars.outputs.project_name }}
       java_version: '21'
       java_distribution: 'corretto'
-      fop_work_dir: 'fop_work'
+      fop_work_dir: './fop_work'
 
     steps:
     - name: Checkout code
@@ -122,6 +122,7 @@ jobs:
         echo "output_file=${{ needs.vars.outputs.project_name }}-appimage-${{ needs.build-test-plugin.outputs.release_version }}.tar.gz" >> "$GITHUB_OUTPUT"
 
     - name: Install additional code
+      if: ${{ false }}
       run: |
         sudo apt-get update -y
         sudo apt-get install imagemagick
