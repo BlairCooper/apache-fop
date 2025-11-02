@@ -86,7 +86,7 @@ jobs:
           run: |
             git config --local user.email "$(git log --format='%ae' HEAD^!)"
             git config --local user.name "$(git log --format='%an' HEAD^!)"
-            git add version.txt composer.json composer.lock src/entryPoint.php
+            git add version.txt composer.json composer.lock entryPoint.php
             echo -n "Rev to version $(cat version.txt)" | git commit -F -
             git push
             echo "version-commit-ref=$(git show-ref --heads -s)" >>build.properties

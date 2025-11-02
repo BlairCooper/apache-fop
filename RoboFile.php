@@ -9,6 +9,7 @@ class RoboFile extends \Robo\Tasks
     private const REPORT_DIR = __DIR__.'/report';
     private const VERSION_FILE = __DIR__.'/version.txt';
     private const COMPOSER_JSON = __DIR__.'/composer.json';
+    private const ENTRYPOINT_PHP = __DIR__.'/entryPoint.php';
     private const DEFAULT_ZIP_VERSION = '0.0';
 
     private string $buildVersion = '9.9.9';
@@ -94,6 +95,10 @@ class RoboFile extends \Robo\Tasks
             ->taskReplaceInFile(self::COMPOSER_JSON)
             ->regex('~"version" *: *"[0-9]+\.[0-9]+\.[0-9]+",~')
             ->to('"version" : "'.$newVersion.'",');
+        $collection
+            ->taskReplaceInFile(self::ENTRYPOINT_PHP)
+            ->regex('~Version: [0-9]+\.[0-9]+\.[0-9]+~')
+            ->to('Version: '.$newVersion);
 
         return $collection;
     }
@@ -161,18 +166,36 @@ class RoboFile extends \Robo\Tasks
     {
         $this->buildVersion = $buildVersion;
 
-        $collection = $this->collectionBuilder();
-        $collection->addTask($this->prepare());
-        $collection->addTast(extractAppImage(self::PROJECT_NAME . '-appimage-' . $buildVersion . '.tar.gz', 'ApacheFopLinux'));
-//        $collection->addTast(extractAppImage(self::PROJECT_NAME . '-unsigned-appimage-' . $buildVersion . '.zip', 'ApacheFopWindows'));
+        $taskPack = $this->taskPack(self::getZipFile());
+        $taskPack
+            ->addFile(self::PROJECT_NAME.'/entryPoint.php', 'entryPoint.php')
 
-        $collection
-            ->taskPack(self::getZipFile())
             ->addDir(self::PROJECT_NAME.'/src', 'src')
             ->addFile(self::PROJECT_NAME.'/composer.json', 'composer.json')
             ->addFile(self::PROJECT_NAME.'/composer.lock', 'composer.lock')
-            ->exclude(['vendor\/.*'])
-            ->run();
+
+            ->addDir(self::PROJECT_NAME.'/vendor', 'vendor')
+            ->exclude('^bin\/.*')           // vendor/bin
+            ->exclude('.*\/tests\/.*')
+            ->exclude('.*\/doc\/.*')
+            ->exclude('.*\/docs\/.*')
+            ->exclude('.*\/docs-md\/.*')
+            ;
+
+        $taskLinuxImage = extractAppImage(
+            self::PROJECT_NAME . '-appimage-' . $buildVersion . '.tar.gz',
+            'ApacheFopLinux'
+            );
+        $taskWindowsImage = extractAppImage(
+            self::PROJECT_NAME . '-unsigned-appimage-' . $buildVersion . '.zip',
+            'ApacheFopWindows'
+            );
+
+        $collection = $this->collectionBuilder();
+        $collection->addTask($this->prepare());
+        $collection->addTast($taskLinuxImage);
+        $collection->addTast($taskWindowsImage);
+        $collection->addTask($taskPack);
 
         return $collection;
     }
