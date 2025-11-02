@@ -19,7 +19,7 @@ jobs:
       project_name: ${{ steps.setup-vars.outputs.project_name }}
       java_version: '21'
       java_distribution: 'corretto'
-      fop_work_dir: './fop_work'
+      fop_work_dir: fop_work
 
     steps:
     - name: Checkout code
@@ -29,7 +29,7 @@ jobs:
       id: setup-vars
       run: |
         # From RoboFile.php: grab the "PROJECT_NAME" const and extract the value
-        echo "project-name=$(sed -nr "s/.*PROJECT_NAME[ \t]*=[ \t]*'(.+)';/\1/p" RoboFile.php)" >> $GITHUB_OUTPUT
+        echo "project_name=$(sed -nr "s/.*PROJECT_NAME[ \t]*=[ \t]*'(.+)';/\1/p" RoboFile.php)" >> $GITHUB_OUTPUT
 
 
   #===========================================================================
@@ -41,7 +41,7 @@ jobs:
       needs: [vars]
 
       outputs:
-        release_version: ${{ steps.release_version.outputs.version }}
+        release_version: ${{ steps.save-version.outputs.version }}
 
       steps:
         # Checkout our code 
@@ -91,7 +91,7 @@ jobs:
             echo "version-commit-ref=$(git show-ref --heads -s)" >>build.properties
 
         - name: Save build version
-          id: release-version
+          id: save-version
           run: |
             echo "version=$(cat version.txt)" >> $GITHUB_OUTPUT
 
@@ -187,7 +187,7 @@ jobs:
     - name: Setup local vars
       id: local-vars
       run: |
-        echo "output_file=${{ needs.vars.outputs.project_name }}-unsigned-appimage-${{ needs.vars.outputs.release_version }}.zip" >> "$Env:GITHUB_OUTPUT"
+        echo "output_file=${{ needs.vars.outputs.project_name }}-unsigned-appimage-${{ needs.build-test-plugin.outputs.release_version }}.zip" >> "$Env:GITHUB_OUTPUT"
 
     - name: Checkout code
       uses: actions/checkout@v5
@@ -203,9 +203,9 @@ jobs:
     # BUILD FOR DISTRIBUTION
     - name: Build distribution
       run: |
-        (Get-Content ./version.txt).replace('${project.version}', '${{ needs.vars.outputs.release_version }}') | Set-Content ./src/main/resources/version.txt
+        (Get-Content ./version.txt).replace('${project.version}', '${{ needs.build-test-plugin.outputs.release_version }}') | Set-Content ./src/main/resources/version.txt
         mvn -B package --file pom.xml
-        jpackage --app-version ${{ needs.vars.outputs.release_version }} "@jpackage/jpackage.cfg" "@jpackage/jpackage-windows-image.cfg"
+        jpackage --app-version ${{ needs.build-test-plugin.outputs.release_version }} "@jpackage/jpackage.cfg" "@jpackage/jpackage-windows-image.cfg"
         attrib -R ./target/dist/CprnXmlValidator/*
 
     - name: Zip App Image
@@ -314,7 +314,7 @@ jobs:
           omitBody: true
           token: ${{ secrets.GITHUB_TOKEN }}
           artifacts:
-            build/${{ steps.build-vars.outputs.project-name }}_${{ steps.build-vars.outputs.version }}.zip
+            build/${{ steps.build-vars.outputs.project_name }}_${{ steps.build-vars.outputs.version }}.zip
 
 #      - name: Upload Release Asset
 #        id: upload-release-asset
@@ -323,6 +323,6 @@ jobs:
 #          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 #        with:
 #          upload_url: ${{ steps.create-release.outputs.upload_url }}
-#          asset_path: build/${{ steps.build-vars.outputs.project-name }}_${{ steps.build-vars.outputs.version }}.zip
-#          asset_name: ${{ steps.build-vars.outputs.project-name }}_${{ steps.build-vars.outputs.version }}.zip
+#          asset_path: build/${{ steps.build-vars.outputs.project_name }}_${{ steps.build-vars.outputs.version }}.zip
+#          asset_name: ${{ steps.build-vars.outputs.project_name }}_${{ steps.build-vars.outputs.version }}.zip
 #          asset_content_type: application/zip
