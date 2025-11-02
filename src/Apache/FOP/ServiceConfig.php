@@ -5,6 +5,8 @@ namespace Apache\FOP;
 class ServiceConfig
 {
     public const PLUGIN_ENTRYPOINT = 'plugin.entryPoint';
+    public const SETTINGS_TABS = 'settings.tabs';
+    public const SHORTCODES = 'shortcode.objs';
 
     /**
      *

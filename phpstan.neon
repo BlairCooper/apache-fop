@@ -3,7 +3,6 @@ parameters:
     paths:
         - src
     ignoreErrors:
-        - identifier: class.notFound
 
         # WordPress functions
         
