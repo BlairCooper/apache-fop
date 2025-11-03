@@ -119,7 +119,7 @@ jobs:
     - name: Setup local vars
       id: local-vars
       run: |
-        echo "output_file=${{ needs.vars.outputs.project_name }}-appimage-${{ needs.build-test-plugin.outputs.release_version }}.tar.gz" >> "$GITHUB_OUTPUT"
+        echo "output_file=${{ needs.vars.outputs.project_name }}-appimage-${{ needs.build-test-plugin.outputs.release_version }}.zip" >> "$GITHUB_OUTPUT"
 
     - name: Install additional code
       if: ${{ false }}
@@ -143,10 +143,10 @@ jobs:
           extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, mysql, mysqli, pdo_mysql, bcmath, soap, intl, gd, exif, iconv, imagick
 
     - name: Download Robo via Composer
+      if: ${{ false }}
       run: composer require consolidation/robo:^5
 
     - name: Download Robo
-      if: ${{ false }}
       run: |
         wget -q https://robo.li/robo.phar
         chmod +x robo.phar
@@ -154,14 +154,15 @@ jobs:
     # BUILD FOR DISTRIBUTION
     - name: Build distribution
       run: |
-        vendor/bin/robo setup:image ${{ needs.vars.outputs.fop_work_dir }}
+        ./robo setup:image ${{ needs.vars.outputs.fop_work_dir }}
         jpackage --app-version ${{ needs.build-test-plugin.outputs.release_version }} --input ${{ needs.vars.outputs.fop_work_dir }} --dest ./target/dist "@jpackage/jpackage.cfg"
         
     - name: Zip App Image
       run: |
-        pushd ./target/dist/ApacheFOP
-        tar -czvf ../${{ steps.local-vars.outputs.output_file }} *
-        popd 
+        zip -r ${{ steps.local-vars.outputs.output_file }} ./target/dist/ApacheFOP
+#        pushd ./target/dist/ApacheFOP
+#        tar -czvf ../${{ steps.local-vars.outputs.output_file }} *
+#        popd 
 
     - name: Upload Linux App Image
       uses: actions/upload-artifact@v4
@@ -226,7 +227,7 @@ jobs:
   #===========================================================================
   create-release:
     runs-on: ubuntu-latest
-    needs: [build-test-plugin, build-linux-app-image, build-windows-app-image]
+    needs: [build-test-plugin, build-linux-app-image] #, build-windows-app-image]
 
     steps:
       - name: Download Artifacts
@@ -269,21 +270,13 @@ jobs:
           distribution: ${{ needs.vars.outputs.java_distribution }}
 
       - name: Download Robo via Composer
+        if: ${{ false }}
         run: composer require consolidation/robo:^5
 
       - name: Download Robo
-        if: ${{ false }}
         run: |
           wget -q https://robo.li/robo.phar
           chmod +x robo.phar
-
-      - name: Create Folders
-        run: |
-          vendor/bin/robo prepare		
-
-      - name: Setup Authorization for Composer
-        run: |
-          echo "{ \"github-oauth\":{ \"github.com\":\"${{ secrets.HSIR_WP_PLUGIN_PAT }}\" } }" >auth.json
 
       # Run composer install (based on the current composer.lock file) 
       - name: Install dependencies
@@ -301,7 +294,7 @@ jobs:
 
       - name: Create Package
         run: |
-          vendor/bin/robo package ${{ steps.build-vars.outputs.version }}
+          ./robo package ${{ steps.build-vars.outputs.version }}
 
       # CREATE GITHUB RELEASE AND ADD ASSETS
       - name: Create GitHub release

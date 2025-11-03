@@ -182,19 +182,19 @@ class RoboFile extends \Robo\Tasks
             ->exclude('.*\/docs-md\/.*')
             ;
 
-        $taskLinuxImage = extractAppImage(
+        $taskLinuxImage = $this->extractAppImage(
             self::PROJECT_NAME . '-appimage-' . $buildVersion . '.tar.gz',
             'ApacheFopLinux'
             );
-        $taskWindowsImage = extractAppImage(
+        $taskWindowsImage = $this->extractAppImage(
             self::PROJECT_NAME . '-unsigned-appimage-' . $buildVersion . '.zip',
             'ApacheFopWindows'
             );
 
         $collection = $this->collectionBuilder();
         $collection->addTask($this->prepare());
-        $collection->addTast($taskLinuxImage);
-        $collection->addTast($taskWindowsImage);
+        $collection->addTask($taskLinuxImage);
+        $collection->addTask($taskWindowsImage);
         $collection->addTask($taskPack);
 
         return $collection;
