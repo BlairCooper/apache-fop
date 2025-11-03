@@ -154,7 +154,7 @@ jobs:
     # BUILD FOR DISTRIBUTION
     - name: Build distribution
       run: |
-        ./robo setup:image ${{ needs.vars.outputs.fop_work_dir }}
+        ./robo.phar setup:image ${{ needs.vars.outputs.fop_work_dir }}
         jpackage --app-version ${{ needs.build-test-plugin.outputs.release_version }} --input ${{ needs.vars.outputs.fop_work_dir }} --dest ./target/dist "@jpackage/jpackage.cfg"
         
     - name: Zip App Image
@@ -294,7 +294,7 @@ jobs:
 
       - name: Create Package
         run: |
-          ./robo package ${{ steps.build-vars.outputs.version }}
+          ./robo.phar package ${{ steps.build-vars.outputs.version }}
 
       # CREATE GITHUB RELEASE AND ADD ASSETS
       - name: Create GitHub release
