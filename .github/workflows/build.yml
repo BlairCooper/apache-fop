@@ -119,13 +119,7 @@ jobs:
     - name: Setup local vars
       id: local-vars
       run: |
-        echo "output_file=${{ needs.vars.outputs.project_name }}-appimage-${{ needs.build-test-plugin.outputs.release_version }}.zip" >> "$GITHUB_OUTPUT"
-
-    - name: Install additional code
-      if: ${{ false }}
-      run: |
-        sudo apt-get update -y
-        sudo apt-get install imagemagick
+        echo "output_file=${{ needs.vars.outputs.project_name }}-appimage-linux-${{ needs.build-test-plugin.outputs.release_version }}.zip" >> "$GITHUB_OUTPUT"
 
     - name: Checkout code
       uses: actions/checkout@v5
@@ -142,10 +136,6 @@ jobs:
           php-version: 8.2
           extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, mysql, mysqli, pdo_mysql, bcmath, soap, intl, gd, exif, iconv, imagick
 
-    - name: Download Robo via Composer
-      if: ${{ false }}
-      run: composer require consolidation/robo:^5
-
     - name: Download Robo
       run: |
         wget -q https://robo.li/robo.phar
@@ -155,19 +145,23 @@ jobs:
     - name: Build distribution
       run: |
         ./robo.phar setup:image ${{ needs.vars.outputs.fop_work_dir }}
-        jpackage --app-version ${{ needs.build-test-plugin.outputs.release_version }} --input ${{ needs.vars.outputs.fop_work_dir }} --dest ./target/dist "@jpackage/jpackage.cfg"
+        jpackage \
+          --name apache-fop-linux \
+          --app-version ${{ needs.build-test-plugin.outputs.release_version }} \
+          --input ${{ needs.vars.outputs.fop_work_dir }} \
+          --dest ./app-image \
+          "@jpackage/jpackage.cfg"
         
     - name: Zip App Image
       run: |
-        zip -r ${{ steps.local-vars.outputs.output_file }} ./target/dist/ApacheFOP
-#        pushd ./target/dist/ApacheFOP
-#        tar -czvf ../${{ steps.local-vars.outputs.output_file }} *
-#        popd 
+        pushd ./app-image
+        zip -r ${{ steps.local-vars.outputs.output_file }} ./apache-fop-linux
+        popd
 
     - name: Upload Linux App Image
       uses: actions/upload-artifact@v4
       with:
-        path: ./target/dist/${{ steps.local-vars.outputs.output_file }}
+        path: ./app-image/${{ steps.local-vars.outputs.output_file }}
         name: linux-app-image
         retention-days: 1
 
@@ -177,7 +171,6 @@ jobs:
   #===========================================================================
   build-windows-app-image:
     name: Build Windows app image
-    if: ${{ false }}
     runs-on: windows-latest
     needs: [vars, build-test-plugin]
 
@@ -188,12 +181,10 @@ jobs:
     - name: Setup local vars
       id: local-vars
       run: |
-        echo "output_file=${{ needs.vars.outputs.project_name }}-unsigned-appimage-${{ needs.build-test-plugin.outputs.release_version }}.zip" >> "$Env:GITHUB_OUTPUT"
+        echo "output_file=${{ needs.vars.outputs.project_name }}-appimage-windows-${{ needs.build-test-plugin.outputs.release_version }}.zip" >> "$Env:GITHUB_OUTPUT"
 
     - name: Checkout code
       uses: actions/checkout@v5
-      with:
-        submodules: 'true'
 
     - name: Set up JDK
       uses: actions/setup-java@v5
@@ -201,24 +192,38 @@ jobs:
         java-version: ${{ needs.vars.outputs.java_version }}
         distribution: ${{ needs.vars.outputs.java_distribution }}
 
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+          php-version: 8.2
+          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, mysql, mysqli, pdo_mysql, bcmath, soap, intl, gd, exif, iconv, imagick
+
+    - name: Download Robo
+      run: |
+        wget -q https://robo.li/robo.phar
+        chmod +x robo.phar
+
     # BUILD FOR DISTRIBUTION
     - name: Build distribution
       run: |
-        (Get-Content ./version.txt).replace('${project.version}', '${{ needs.build-test-plugin.outputs.release_version }}') | Set-Content ./src/main/resources/version.txt
-        mvn -B package --file pom.xml
-        jpackage --app-version ${{ needs.build-test-plugin.outputs.release_version }} "@jpackage/jpackage.cfg" "@jpackage/jpackage-windows-image.cfg"
-        attrib -R ./target/dist/CprnXmlValidator/*
-
+        ./robo.phar setup:image ${{ needs.vars.outputs.fop_work_dir }}
+        jpackage \
+          --name apache-fop-windows \
+          --app-version ${{ needs.build-test-plugin.outputs.release_version }} \
+          --input ${{ needs.vars.outputs.fop_work_dir }} \
+          --dest ./app-image \
+          "@jpackage/jpackage.cfg"
+        
     - name: Zip App Image
       run: |
-        Compress-Archive -Path ./target/dist/CprnXmlValidator/* -DestinationPath ./target/dist/${{ steps.local-vars.outputs.output_file }}
+        Compress-Archive -Path ./app-image/* -DestinationPath ./app-image/${{ steps.local-vars.outputs.output_file }}
 
     # SAVE INSTALLER
     - name: Upload Windows app image
       uses: actions/upload-artifact@v4
       with:
-        path: ./target/dist/${{ steps.local-vars.outputs.output_file }}
-        name: windows-unsigned-app-image
+        path: ./app-image/${{ steps.local-vars.outputs.output_file }}
+        name: windows-app-image
         retention-days: 1
 
 
@@ -262,17 +267,6 @@ jobs:
             extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, mysql, mysqli, pdo_mysql, bcmath, soap, intl, gd, exif, iconv, imagick
             coverage: none
 
-      - name: Set up JDK
-        if: ${{ false }}
-        uses: actions/setup-java@v5
-        with:
-          java-version: ${{ needs.vars.outputs.java_version }}
-          distribution: ${{ needs.vars.outputs.java_distribution }}
-
-      - name: Download Robo via Composer
-        if: ${{ false }}
-        run: composer require consolidation/robo:^5
-
       - name: Download Robo
         run: |
           wget -q https://robo.li/robo.phar
@@ -290,7 +284,7 @@ jobs:
       - name: Download Windows app image
         uses: actions/download-artifact@v4
         with:
-          name: windows-unsigned-app-image
+          name: windows-app-image
 
       - name: Create Package
         run: |
@@ -308,14 +302,3 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           artifacts:
             build/${{ steps.build-vars.outputs.project_name }}_${{ steps.build-vars.outputs.version }}.zip
-
-#      - name: Upload Release Asset
-#        id: upload-release-asset
-#        uses: actions/upload-release-asset@v1
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#        with:
-#          upload_url: ${{ steps.create-release.outputs.upload_url }}
-#          asset_path: build/${{ steps.build-vars.outputs.project_name }}_${{ steps.build-vars.outputs.version }}.zip
-#          asset_name: ${{ steps.build-vars.outputs.project_name }}_${{ steps.build-vars.outputs.version }}.zip
-#          asset_content_type: application/zip

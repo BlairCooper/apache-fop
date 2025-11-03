@@ -180,15 +180,17 @@ class RoboFile extends \Robo\Tasks
             ->exclude('.*\/doc\/.*')
             ->exclude('.*\/docs\/.*')
             ->exclude('.*\/docs-md\/.*')
+
+            ->addDir(self::PROJECT_NAME.'/fopApp', 'fopApp')
             ;
 
         $taskLinuxImage = $this->extractAppImage(
-            self::PROJECT_NAME . '-appimage-' . $buildVersion . '.tar.gz',
-            'ApacheFopLinux'
+            self::PROJECT_NAME . '-appimage-linux-' . $buildVersion . '.zip',
+            'fopApp'
             );
         $taskWindowsImage = $this->extractAppImage(
-            self::PROJECT_NAME . '-unsigned-appimage-' . $buildVersion . '.zip',
-            'ApacheFopWindows'
+            self::PROJECT_NAME . '-appimage-windows-' . $buildVersion . '.zip',
+            'fopApp'
             );
 
         $collection = $this->collectionBuilder();
