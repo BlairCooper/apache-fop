@@ -143,8 +143,7 @@ jobs:
         wget -q https://robo.li/robo.phar
         chmod +x robo.phar
 
-    # BUILD FOR DISTRIBUTION
-    - name: Build distribution
+    - name: Setup App Image for JPackage
       run: |
         ./robo.phar setup:image ${{ needs.vars.outputs.fop_work_dir }}
         jpackage \
@@ -154,6 +153,15 @@ jobs:
           --dest ./app-image \
           "@jpackage/jpackage.cfg"
         
+    - name: Run JPackage
+      run: >
+        jpackage
+        --name apache-fop-linux
+        --app-version ${{ needs.build-test-plugin.outputs.release_version }}
+        --input ${{ needs.vars.outputs.fop_work_dir }}
+        --dest ./app-image
+        "@jpackage/jpackage.cfg"
+          
     - name: Zip App Image
       run: |
         pushd ./app-image
@@ -205,17 +213,19 @@ jobs:
         Invoke-WebRequest -Uri "https://robo.li/robo.phar" -OutFile "robo.phar"
 #        chmod +x robo.phar
 
-    # BUILD FOR DISTRIBUTION
-    - name: Build distribution
+    - name: Setup App Image for JPackage
       run: |
         ./robo.phar setup:image ${{ needs.vars.outputs.fop_work_dir }}
-        jpackage \
-          --name apache-fop-windows \
-          --app-version ${{ needs.build-test-plugin.outputs.release_version }} \
-          --input ${{ needs.vars.outputs.fop_work_dir }} \
-          --dest ./app-image \
-          "@jpackage/jpackage.cfg"
         
+    - name: Run JPackage
+      run: >
+        jpackage
+        --name apache-fop-windows
+        --app-version ${{ needs.build-test-plugin.outputs.release_version }}
+        --input ${{ needs.vars.outputs.fop_work_dir }}
+        --dest ./app-image
+        "@jpackage/jpackage.cfg"
+              
     - name: Zip App Image
       run: |
         Compress-Archive -Path ./app-image/* -DestinationPath ./app-image/${{ steps.local-vars.outputs.output_file }}
