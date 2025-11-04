@@ -146,12 +146,6 @@ jobs:
     - name: Setup App Image for JPackage
       run: |
         ./robo.phar setup:image ${{ needs.vars.outputs.fop_work_dir }}
-        jpackage \
-          --name apache-fop-linux \
-          --app-version ${{ needs.build-test-plugin.outputs.release_version }} \
-          --input ${{ needs.vars.outputs.fop_work_dir }} \
-          --dest ./app-image \
-          "@jpackage/jpackage.cfg"
         
     - name: Run JPackage
       run: >
@@ -215,7 +209,7 @@ jobs:
 
     - name: Setup App Image for JPackage
       run: |
-        ./robo.phar setup:image ${{ needs.vars.outputs.fop_work_dir }}
+        php robo.phar setup:image ${{ needs.vars.outputs.fop_work_dir }}
         
     - name: Run JPackage
       run: >
