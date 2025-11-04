@@ -1,7 +1,7 @@
 {
 	"name" : "apache/apache-fop-plugin",
 	"description" : "Plugin to run Apache FOP from within WordPress",
-	"version" : "1.0.13",
+	"version" : "1.0.14",
 	"type" : "wordpress-plugin",
 	"minimum-stability" : "stable",
 	"license" : "BSD-3-Clause",
