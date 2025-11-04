@@ -42,7 +42,7 @@ jobs:
 
       outputs:
         release_version: ${{ steps.save-version.outputs.version }}
-        version-commit-ref: ${{ steps.commit-version.outputs.version }}
+        version-commit-ref: ${{ steps.commit-version.outputs.version-commit-ref }}
 
       steps:
         # Checkout our code 

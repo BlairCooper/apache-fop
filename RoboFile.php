@@ -10,6 +10,7 @@ class RoboFile extends \Robo\Tasks
     private const VERSION_FILE = __DIR__.'/version.txt';
     private const COMPOSER_JSON = __DIR__.'/composer.json';
     private const ENTRYPOINT_PHP = __DIR__.'/entryPoint.php';
+    private const FOP_APP_DIR = 'fopApp';
     private const DEFAULT_ZIP_VERSION = '0.0';
 
     private string $buildVersion = '9.9.9';
@@ -181,16 +182,18 @@ class RoboFile extends \Robo\Tasks
             ->exclude('.*\/docs\/.*')
             ->exclude('.*\/docs-md\/.*')
 
-            ->addDir(self::PROJECT_NAME.'/fopApp', 'fopApp')
+            ->addDir(self::PROJECT_NAME.'/'.self::FOP_APP_DIR, self::FOP_APP_DIR)
             ;
 
         $taskLinuxImage = $this->extractAppImage(
             self::PROJECT_NAME . '-appimage-linux-' . $buildVersion . '.zip',
-            'fopApp'
+            self::FOP_APP_DIR,
+            'Linux'
             );
         $taskWindowsImage = $this->extractAppImage(
             self::PROJECT_NAME . '-appimage-windows-' . $buildVersion . '.zip',
-            'fopApp'
+            self::FOP_APP_DIR,
+            'Windows'
             );
 
         $collection = $this->collectionBuilder();
@@ -261,7 +264,7 @@ class RoboFile extends \Robo\Tasks
         return $task;
     }
 
-    private function extractAppImage(string $appImgArchive, string $targetDir): TaskInterface
+    private function extractAppImage(string $appImgArchive, string $targetDir, string $osFamily): TaskInterface
     {
         $collection = $this->collectionBuilder();
 
@@ -271,7 +274,7 @@ class RoboFile extends \Robo\Tasks
             );
         $collection->addTask(
             $this->taskExtract($appImgArchive)
-            ->to($targetDir)
+            ->to($targetDir . DIRECTORY_SEPARATOR . $osFamily)
             ->preserveTopDirectory(true) // the default
             );
         return $collection;
