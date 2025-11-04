@@ -295,7 +295,7 @@ jobs:
 
       - name: Create Package
         run: |
-          ./robo.phar package ${{ steps.build-vars.outputs.version }}
+          ./robo.phar package ${{ needs.build-test-plugin.outputs.release_version }}
 
       # CREATE GITHUB RELEASE AND ADD ASSETS
       - name: Create GitHub release
@@ -303,10 +303,10 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ steps.build-vars.outputs.version }}
-          name: Release ${{ steps.build-vars.outputs.version }}
+          name: Release ${{ needs.build-test-plugin.outputs.release_version }}
 #          commit: ${{ env.version-commit-ref }}
           commit: ${{ needs.build-test-plugin.outputs.version-commit-ref }}
           omitBody: true
           token: ${{ secrets.GITHUB_TOKEN }}
           artifacts:
-            build/${{ steps.build-vars.outputs.project_name }}_${{ steps.build-vars.outputs.version }}.zip
+            build/${{ steps.build-vars.outputs.project_name }}_${{ needs.build-test-plugin.outputs.release_version }}.zip
