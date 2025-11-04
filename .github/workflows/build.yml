@@ -89,21 +89,12 @@ jobs:
             git add version.txt composer.json composer.lock entryPoint.php
             echo -n "Rev to version $(cat version.txt)" | git commit -F -
             git push
-            echo "version-commit-ref=$(git show-ref --heads -s)" >>build.properties
             echo "version-commit-ref=$(git show-ref --heads -s)" >> $GITHUB_OUTPUT
 
         - name: Save build version
           id: save-version
           run: |
             echo "version=$(cat version.txt)" >> $GITHUB_OUTPUT
-
-        - name: Save Artifacts
-          uses: actions/upload-artifact@v4
-          with:
-            name: build-properties
-            path: |
-              build.properties
-            retention-days: 5
 
 
   #===========================================================================
@@ -238,34 +229,13 @@ jobs:
   #===========================================================================
   create-release:
     runs-on: ubuntu-latest
-    needs: [build-test-plugin, build-linux-app-image, build-windows-app-image]
+    needs: [vars, build-test-plugin, build-linux-app-image, build-windows-app-image]
 
     steps:
-      - name: Download Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: build-properties
-
-      - name: Read Build Properties
-        run: |
-          IFS="="
-          while read -r key value
-          do
-            if [ -n $value ]; then
-              echo A
-              echo "$key=$value" >> $GITHUB_ENV
-            else
-              echo B
-              echo "$key=$value" >> $GITHUB_ENV
-            fi
-          done < build.properties
-          unset IFS
-    
       - name: Checkout code
         uses: actions/checkout@v5
         with:
           ref: ${{ needs.build-test-plugin.outputs.version-commit-ref }}
-#          ref: ${{ env.version-commit-ref }}
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
